@@ -19,8 +19,8 @@ This dashboard provides a sleek, real-time interface for monitoring Suricata IDS
 ## Setup
 1. Clone this repository:
 ```bash
-git clone <repository_url>
-cd <repository_folder>
+git clone (https://github.com/appaKappaK/Suricata-dashboard.git)
+cd Suricata-dashboard
 ```
 
 2. Create a `.env` file with placeholders for configuration:
