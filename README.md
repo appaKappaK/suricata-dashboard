@@ -57,5 +57,5 @@ http://<DASHBOARD_HOST>:<DASHBOARD_PORT>
 - `HIGH_PRIORITY_THRESHOLD`: Number of alerts considered high priority.
 
 ## License
-This project uses the 3.0 GPU license. See `LICENSE` for details.
+This project uses the GPL-3.0 license. See `LICENSE` for details.
 
