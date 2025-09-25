@@ -73,7 +73,8 @@ By default, `dashboard.py` is set up to run directly with Python:
 python dashboard.py
 ```
 
-If you want to serve the dashboard using **Gunicorn**, you need to remove the uncommented at the bottom as its set for running it straight python so it looks like
+If you want to serve the dashboard using **Gunicorn**, you need to comment the uncommented and uncomment the commented... 
+Make it look like
 ```bash
 def create_app():
     # Validate configuration first
