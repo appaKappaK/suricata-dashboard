@@ -47,7 +47,7 @@ pip install -r requirements.txt
 4. Run the dashboard:
 
 ```bash
-python dashboard.py
+python suricata_dashboard.py
 ```
 
 5. Access the dashboard in your browser:
@@ -67,14 +67,14 @@ http://<DASHBOARD_HOST>:<DASHBOARD_PORT>
 
 ## Running with Gunicorn
 
-By default, `dashboard.py` is set up to run directly with Python:
+By default, `suricata_dashboard.py` is set up to run directly with Python:
 
 ```bash
-python dashboard.py
+python suricata_dashboard.py
 ```
 
-If you want to serve the dashboard using **Gunicorn**, you need to comment the uncommented and uncomment the commented... 
-Either way the bottom needs to have this uncommented and the other recommented or removed for it to work... SOME ASSEMBLY REQUIRED 
+To use **Gunicorn**, you need to comment the uncommented and uncomment the commented... 
+### Either way the bottom needs to have this uncommented and the other recommented or removed for it to work... SOME ASSEMBLY REQUIRED 
 ```bash
 def create_app():
     # Validate configuration first
