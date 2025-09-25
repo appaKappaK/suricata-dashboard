@@ -12,7 +12,6 @@ This dashboard provides a sleek, real-time interface for monitoring Suricata IDS
 
 ## Requirements
 - Python 3.x
-- Flask
 - Suricata IDS installed and logging alerts to `eve.json`
 - Web browser for accessing the dashboard
 
