@@ -1500,35 +1500,7 @@ HTML_TEMPLATE = """
 </html>
 """
 
-def create_app():
-    # Validate configuration first
-    validate_config()
-    
-    # Start background log monitoring
-    monitor_thread = threading.Thread(target=log_monitor, daemon=True)
-    monitor_thread.start()
-    
-    app_logger.info("🚀 Suricata IDS Dashboard v2.0 Starting...")
-    app_logger.info(f"📁 Log file: {LOG_FILE}")
-    app_logger.info(f"📊 Max lines to read: {MAX_LINES_TO_READ}")
-    app_logger.info(f"⏱️ Refresh interval: {REFRESH_INTERVAL}s")
-    app_logger.info(f"🔔 High priority threshold: {HIGH_PRIORITY_THRESHOLD} alerts")
-    app_logger.info(f"🌐 Dashboard URL: http://{HOST}:{PORT}")
-    app_logger.info(f"📝 App logs: logs/suricata_dashboard.log (50MB rotation)")
-    
-    # Initial log parse
-    parse_suricata_log()
-    
-    return app
-
-
-# For gunicorn to see:
-app = create_app()
-
-if __name__ == '__main__':
-    app.run(host=HOST, port=PORT, debug=False)
-
-    # =================== #
+#def create_app():
     # Validate configuration first
     #validate_config()
     
@@ -1547,5 +1519,33 @@ if __name__ == '__main__':
     # Initial log parse
     #parse_suricata_log()
     
-    # Run Flask app
+    #return app
+
+
+# For gunicorn to see:
+#app = create_app()
+
+#if __name__ == '__main__':
     #app.run(host=HOST, port=PORT, debug=False)
+
+# =================== #
+# Validate configuration first
+validate_config()
+
+# Start background log monitoring
+monitor_thread = threading.Thread(target=log_monitor, daemon=True)
+monitor_thread.start()
+
+app_logger.info("🚀 Suricata IDS Dashboard v2.0 Starting...")
+app_logger.info(f"📁 Log file: {LOG_FILE}")
+app_logger.info(f"📊 Max lines to read: {MAX_LINES_TO_READ}")
+app_logger.info(f"⏱️ Refresh interval: {REFRESH_INTERVAL}s")
+app_logger.info(f"🔔 High priority threshold: {HIGH_PRIORITY_THRESHOLD} alerts")
+app_logger.info(f"🌐 Dashboard URL: http://{HOST}:{PORT}")
+app_logger.info(f"📝 App logs: logs/suricata_dashboard.log (50MB rotation)")
+
+# Initial log parse
+parse_suricata_log()
+
+# Run Flask app
+app.run(host=HOST, port=PORT, debug=False)
