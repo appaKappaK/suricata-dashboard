@@ -108,12 +108,12 @@ if __name__ == '__main__':
 Then you can run Gunicorn like this:
 
 ```bash
-gunicorn -w 4 -b 0.0.0.0:8080 dashboard:app
+gunicorn -w 4 -b 0.0.0.0:8080 suricata_dashboard:app
 ```
 
 - `-w 4` starts 4 worker processes (adjust as needed).
 - `-b 0.0.0.0:8080` binds the app to all interfaces on port 8080.
-- `dashboard:app` points Gunicorn to the Flask `app` object returned by `create_app()`.
+- `suricata_dashboard:app` points Gunicorn to the Flask `app` object returned by `create_app()`.
 
 ## License
 
