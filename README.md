@@ -74,7 +74,7 @@ python dashboard.py
 ```
 
 If you want to serve the dashboard using **Gunicorn**, you need to comment the uncommented and uncomment the commented... 
-Make it look like
+Either way the bottom needs to have this uncommented and the other recommented or removed for it to work... SOME ASSEMBLY REQUIRED 
 ```bash
 def create_app():
     # Validate configuration first
