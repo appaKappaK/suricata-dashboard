@@ -73,10 +73,36 @@ By default, `dashboard.py` is set up to run directly with Python:
 python dashboard.py
 ```
 
-If you want to serve the dashboard using **Gunicorn**, you need to adjust the commented/uncommented sections at the bottom of `dashboard.py`. Specifically:
+If you want to serve the dashboard using **Gunicorn**, you need to remove the uncommented at the bottom as its set for running it straight python so it looks like
+```bash
+def create_app():
+    # Validate configuration first
+    validate_config()
+    
+    # Start background log monitoring
+    monitor_thread = threading.Thread(target=log_monitor, daemon=True)
+    monitor_thread.start()
+    
+    app_logger.info("🚀 Suricata IDS Dashboard v2.0 Starting...")
+    app_logger.info(f"📁 Log file: {LOG_FILE}")
+    app_logger.info(f"📊 Max lines to read: {MAX_LINES_TO_READ}")
+    app_logger.info(f"⏱️ Refresh interval: {REFRESH_INTERVAL}s")
+    app_logger.info(f"🔔 High priority threshold: {HIGH_PRIORITY_THRESHOLD} alerts")
+    app_logger.info(f"🌐 Dashboard URL: http://{HOST}:{PORT}")
+    app_logger.info(f"📝 App logs: logs/suricata_dashboard.log (50MB rotation)")
+    
+    # Initial log parse
+    parse_suricata_log()
+    
+    return app
 
-- Uncomment the `create_app()` function and the `app = create_app()` line.
-- Comment out (or remove) the direct `app.run(...)` section.
+
+# For gunicorn to see:
+app = create_app()
+
+if __name__ == '__main__':
+    app.run(host=HOST, port=PORT, debug=False)
+```
 
 Then you can run Gunicorn like this:
 
@@ -87,8 +113,6 @@ gunicorn -w 4 -b 0.0.0.0:8080 dashboard:app
 - `-w 4` starts 4 worker processes (adjust as needed).
 - `-b 0.0.0.0:8080` binds the app to all interfaces on port 8080.
 - `dashboard:app` points Gunicorn to the Flask `app` object returned by `create_app()`.
-
-This allows production-ready serving with proper multi-threading and request handling.
 
 ## License
 
