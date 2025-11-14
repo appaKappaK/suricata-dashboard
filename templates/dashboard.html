@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Suricata IDS Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Suricata IDS Dashboard</h1>
+            <div class="header-controls">
+                <span>Real-time network intrusion detection monitoring</span>
+                <button class="btn" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-success" id="auto-refresh-btn" onclick="toggleAutoRefresh()">
+                    <i class="fas fa-pause"></i> Auto-Refresh
+                </button>
+                <span id="status-indicator" class="status-indicator status-stable">
+                    <i class="fas fa-arrows-alt-h"></i> Stable
+                </span>
+            </div>
+            <div class="performance-grid">
+                <div class="perf-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Load: <span id="load-time">-</span></span>
+                </div>
+                <div class="perf-item">
+                    <i class="fas fa-microchip"></i>
+                    <span>Processing: <span id="processing-time">{{ stats.processing_time_ms }}ms</span></span>
+                </div>
+                <div class="perf-item">
+                    <i class="fas fa-hdd"></i>
+                    <span>Log: <span id="log-size">{{ stats.log_file_size_mb }}MB</span></span>
+                </div>
+                <div class="perf-item">
+                    <i class="fas fa-bolt"></i>
+                    <span>Rate: <span id="alerts-per-second">{{ stats.alerts_per_second }}/s</span></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-number" id="total-alerts">{{ stats.total_alerts }}</div>
+                <div class="stat-label">Total Alerts</div>
+            </div>
+            <div class="stat-card high">
+                <div class="stat-icon"><i class="fas fa-skull-crossbones"></i></div>
+                <div class="stat-number stat-high" id="high-priority">{{ stats.high_priority }}</div>
+                <div class="stat-label">High Priority</div>
+            </div>
+            <div class="stat-card medium">
+                <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+                <div class="stat-number stat-medium" id="medium-priority">{{ stats.medium_priority }}</div>
+                <div class="stat-label">Medium Priority</div>
+            </div>
+            <div class="stat-card low">
+                <div class="stat-icon"><i class="fas fa-info-circle"></i></div>
+                <div class="stat-number stat-low" id="low-priority">{{ stats.low_priority }}</div>
+                <div class="stat-label">Low Priority</div>
+            </div>
+        </div>
+        
+        <div class="search-panel">
+            <div class="search-header">
+                <h3><i class="fas fa-search"></i> Advanced Search</h3>
+                <button class="btn" onclick="toggleSearchFilters()">
+                    <i class="fas fa-sliders-h"></i> <span id="filter-toggle-text">Show Filters</span>
+                </button>
+            </div>
+            
+            <div class="search-input-group">
+                <input type="text" id="search-input" class="search-input" 
+                    placeholder="Search signatures, IPs, categories...">
+                <button class="btn" onclick="performSearch()">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+            
+            <div id="search-filters" class="search-filters" style="display: none;">
+                <div class="filter-group">
+                    <label>Priority Level</label>
+                    <select id="priority-filter">
+                        <option value="">All Priorities</option>
+                        <option value="high">High Priority</option>
+                        <option value="medium">Medium Priority</option>
+                        <option value="low">Low Priority</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>IP Address</label>
+                    <input type="text" id="ip-filter" placeholder="Source or destination IP">
+                </div>
+                <div class="filter-group">
+                    <label>Protocol</label>
+                    <select id="protocol-filter">
+                        <option value="">All Protocols</option>
+                        <option value="TCP">TCP</option>
+                        <option value="UDP">UDP</option>
+                        <option value="ICMP">ICMP</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="display: flex; align-items: end;">
+                    <button class="btn btn-danger" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+            </div>
+            
+            <div id="search-results" style="margin-top: 20px; display: none;">
+                <div id="search-stats" style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 6px; margin-bottom: 15px;">
+                    <span id="results-count">0</span> results found
+                </div>
+                <div id="search-results-container"></div>
+            </div>
+        </div>
+        
+        <div class="alerts-container">
+            <div class="alerts-header">
+                <h2><i class="fas fa-bell"></i> Recent Security Alerts</h2>
+            </div>
+            <div id="alerts-list">
+                {% for alert in alerts %}
+                <div class="alert alert-{{ alert.priority }}">
+                    <div class="alert-timestamp">
+                        <i class="far fa-clock"></i>
+                        <span>{{ alert.timestamp }}</span>
+                        <span class="priority-badge priority-{{ alert.priority }}">
+                            {% if alert.priority == 'high' %}
+                                <i class="fas fa-skull-crossbones"></i>
+                            {% elif alert.priority == 'medium' %}
+                                <i class="fas fa-exclamation-triangle"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle"></i>
+                            {% endif %}
+                            {{ alert.priority|upper }}
+                        </span>
+                    </div>
+                    <div class="alert-signature">{{ alert.signature }}</div>
+                    <div class="alert-details">
+                        <div class="detail-item">
+                            <i class="fas fa-network-wired"></i>
+                            <span>{{ alert.src_ip }}:{{ alert.src_port }} → {{ alert.dest_ip }}:{{ alert.dest_port }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>{{ alert.proto }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-tag"></i>
+                            <span>{{ alert.category }}</span>
+                        </div>
+                        {% if alert.event_type != 'alert' %}
+                        <div class="detail-item">
+                            <i class="fas fa-eye"></i>
+                            <span>Custom Detection</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-item">
+                <i class="far fa-clock"></i>
+                <span>Last Updated: <span id="last-updated">{{ stats.last_updated }}</span></span>
+            </div>
+            <div class="footer-item">
+                <i class="fas fa-database"></i>
+                <span>Monitoring: {{ config.MAX_LINES_TO_READ }} lines</span>
+            </div>
+            <div class="footer-item">
+                <i class="fas fa-shield-alt"></i>
+                <span>Suricata Dashboard</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefresh = true;
+        let refreshInterval = null;
+        let searchFiltersVisible = false;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Suricata Dashboard initializing...');
+            
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') performSearch();
+                });
+            }
+            
+            startAutoRefresh();
+            
+            refreshData();
+            
+            console.log('Dashboard ready');
+        });
+        
+        function refreshData() {
+            console.log('Refreshing dashboard data...');
+            const startTime = Date.now();
+            
+            const statusEl = document.getElementById('status-indicator');
+            if (statusEl) {
+                statusEl.innerHTML = '<div class="loading"></div> Refreshing...';
+            }
+            
+            fetch('/api/alerts')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateDashboard(data);
+                    
+                    const loadTime = Date.now() - startTime;
+                    updateLoadTime(loadTime);
+                    
+                    console.log(`Dashboard refreshed in ${loadTime}ms`);
+                })
+                .catch(error => {
+                    console.error('Refresh failed:', error);
+                    handleRefreshError(error);
+                });
+        }
+        
+        function updateDashboard(data) {
+            if (data.stats) {
+                updateStats(data.stats);
+            }
+            
+            if (data.alerts) {
+                updateAlertsList(data.alerts);
+            }
+            
+            if (data.performance) {
+                updatePerformanceMetrics(data.performance);
+            }
+        }
+        
+        function updateStats(stats) {
+            const statElements = {
+                'total-alerts': stats.total_alerts || 0,
+                'high-priority': stats.high_priority || 0,
+                'medium-priority': stats.medium_priority || 0,
+                'low-priority': stats.low_priority || 0
+            };
+            
+            for (const [id, value] of Object.entries(statElements)) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value.toLocaleString();
+                }
+            }
+            
+            updateTrendIndicator(stats.trend);
+            
+            const lastUpdatedEl = document.getElementById('last-updated');
+            if (lastUpdatedEl && stats.last_updated) {
+                lastUpdatedEl.textContent = stats.last_updated;
+            }
+        }
+        
+        function updateAlertsList(alerts) {
+            const container = document.getElementById('alerts-list');
+            if (!container) return;
+            
+            if (!alerts || alerts.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px; color: var(--text-muted);">
+                        <i class="fas fa-info-circle" style="font-size: 3em; margin-bottom: 20px; opacity: 0.5;"></i>
+                        <h3>No Recent Alerts</h3>
+                        <p>System is monitoring for security events...</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sortedAlerts = [...alerts].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            const alertsHTML = sortedAlerts.map(alert => {
+                const priorityIcons = {
+                    high: 'skull-crossbones',
+                    medium: 'exclamation-triangle',
+                    low: 'info-circle'
+                };
+                
+                const priorityIcon = priorityIcons[alert.priority] || 'info-circle';
+                
+                return `
+                    <div class="alert alert-${alert.priority}">
+                        <div class="alert-timestamp">
+                            <i class="far fa-clock"></i>
+                            <span>${alert.timestamp}</span>
+                            <span class="priority-badge priority-${alert.priority}">
+                                <i class="fas fa-${priorityIcon}"></i>
+                                ${alert.priority.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="alert-signature">${escapeHtml(alert.signature)}</div>
+                        <div class="alert-details">
+                            <div class="detail-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>${alert.src_ip}:${alert.src_port} → ${alert.dest_ip}:${alert.dest_port}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-project-diagram"></i>
+                                <span>${alert.proto}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-tag"></i>
+                                <span>${alert.category}</span>
+                            </div>
+                            ${alert.event_type !== 'alert' ? `
+                                <div class="detail-item">
+                                    <i class="fas fa-eye"></i>
+                                    <span>Custom Detection</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = alertsHTML;
+        }
+        
+        function updateTrendIndicator(trend) {
+            const statusEl = document.getElementById('status-indicator');
+            if (!statusEl) return;
+            
+            const trendConfig = {
+                rising: { icon: 'arrow-up', class: 'status-rising', text: 'Rising' },
+                falling: { icon: 'arrow-down', class: 'status-falling', text: 'Falling' },
+                stable: { icon: 'arrows-alt-h', class: 'status-stable', text: 'Stable' }
+            };
+            
+            const config = trendConfig[trend] || trendConfig.stable;
+            
+            statusEl.className = `status-indicator ${config.class}`;
+            statusEl.innerHTML = `<i class="fas fa-${config.icon}"></i> ${config.text}`;
+        }
+        
+        function updateLoadTime(loadTime) {
+            const loadTimeEl = document.getElementById('load-time');
+            if (loadTimeEl) {
+                loadTimeEl.textContent = `${loadTime}ms`;
+                loadTimeEl.style.color = loadTime > 2000 ? 'var(--medium-priority)' : 'var(--text-muted)';
+            }
+        }
+        
+        function updatePerformanceMetrics(performance) {
+            const processingTimeEl = document.getElementById('processing-time');
+            if (processingTimeEl && performance.last_file_read_time) {
+                processingTimeEl.textContent = `${performance.last_file_read_time}ms`;
+            }
+        }
+        
+        function handleRefreshError(error) {
+            const statusEl = document.getElementById('status-indicator');
+            if (statusEl) {
+                statusEl.className = 'status-indicator status-rising';
+                statusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+            }
+            
+            const loadTimeEl = document.getElementById('load-time');
+            if (loadTimeEl) {
+                loadTimeEl.textContent = 'Error';
+                loadTimeEl.style.color = 'var(--high-priority)';
+            }
+        }
+        
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            const btn = document.getElementById('auto-refresh-btn');
+            
+            if (!btn) return;
+            
+            if (autoRefresh) {
+                btn.innerHTML = '<i class="fas fa-pause"></i> Auto-Refresh';
+                btn.className = 'btn btn-success';
+                startAutoRefresh();
+                console.log('Auto-refresh enabled');
+            } else {
+                btn.innerHTML = '<i class="fas fa-play"></i> Auto-Refresh';
+                btn.className = 'btn btn-danger';
+                stopAutoRefresh();
+                console.log('Auto-refresh disabled');
+            }
+        }
+        
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            
+            refreshInterval = setInterval(() => {
+                if (autoRefresh) {
+                    refreshData();
+                }
+            }, 15000); 
+        }
+        
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+        
+        function toggleSearchFilters() {
+            const filters = document.getElementById('search-filters');
+            const toggleText = document.getElementById('filter-toggle-text');
+            
+            if (!filters || !toggleText) return;
+            
+            searchFiltersVisible = !searchFiltersVisible;
+            
+            filters.style.display = searchFiltersVisible ? 'grid' : 'none';
+            toggleText.textContent = searchFiltersVisible ? 'Hide Filters' : 'Show Filters';
+        }
+        
+        function performSearch() {
+            const query = document.getElementById('search-input')?.value.trim() || '';
+            const priority = document.getElementById('priority-filter')?.value || '';
+            const ip = document.getElementById('ip-filter')?.value.trim() || '';
+            const protocol = document.getElementById('protocol-filter')?.value || '';
+            
+            if (!query && !priority && !ip && !protocol) {
+                alert('Please enter search criteria or select filters.');
+                return;
+            }
+            
+            const params = new URLSearchParams();
+            if (query) params.append('q', query);
+            if (priority) params.append('priority', priority);
+            if (ip) params.append('ip', ip);
+            if (protocol) params.append('protocol', protocol);
+            
+            console.log('Performing search:', params.toString());
+            
+            const resultsContainer = document.getElementById('search-results');
+            const searchStats = document.getElementById('search-stats');
+            
+            if (resultsContainer) resultsContainer.style.display = 'block';
+            if (searchStats) searchStats.innerHTML = '<div class="loading"></div> Searching...';
+            
+            fetch(`/api/alerts/search?${params.toString()}`)
+                .then(response => response.json())
+                .then(data => {
+                    displaySearchResults(data);
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    if (searchStats) {
+                        searchStats.innerHTML = '<span style="color: var(--high-priority);">Search failed</span>';
+                    }
+                });
+        }
+        
+        function displaySearchResults(data) {
+            const resultsContainer = document.getElementById('search-results-container');
+            const searchStats = document.getElementById('search-stats');
+            
+            if (!resultsContainer || !searchStats) return;
+            
+            const resultCount = data.results ? data.results.length : 0;
+            const searchTime = data.search_time_ms || 0;
+            
+            searchStats.innerHTML = `
+                <span><strong>${resultCount.toLocaleString()}</strong> results found in ${searchTime}ms</span>
+                ${resultCount > 0 ? '<button class="btn" onclick="exportSearchResults()" style="margin-left: 15px;"><i class="fas fa-download"></i> Export</button>' : ''}
+            `;
+            
+            if (!data.results || data.results.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class="fas fa-search" style="font-size: 2em; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <h3>No Results Found</h3>
+                        <p>Try adjusting your search criteria or filters.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const resultsHTML = data.results.map(alert => {
+                const priorityIcons = {
+                    high: 'skull-crossbones',
+                    medium: 'exclamation-triangle',
+                    low: 'info-circle'
+                };
+                
+                const priorityIcon = priorityIcons[alert.priority] || 'info-circle';
+                
+                return `
+                    <div class="alert alert-${alert.priority}">
+                        <div class="alert-timestamp">
+                            <i class="far fa-clock"></i>
+                            <span>${alert.timestamp}</span>
+                            <span class="priority-badge priority-${alert.priority}">
+                                <i class="fas fa-${priorityIcon}"></i>
+                                ${alert.priority.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="alert-signature">${escapeHtml(alert.signature)}</div>
+                        <div class="alert-details">
+                            <div class="detail-item">
+                                <i class="fas fa-network-wired"></i>
+                                <span>${alert.src_ip}:${alert.src_port} → ${alert.dest_ip}:${alert.dest_port}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-project-diagram"></i>
+                                <span>${alert.proto}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-tag"></i>
+                                <span>${alert.category}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            resultsContainer.innerHTML = resultsHTML;
+        }
+        
+        function clearFilters() {
+            const filterIds = ['search-input', 'priority-filter', 'ip-filter', 'protocol-filter'];
+            
+            filterIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.value = '';
+            });
+            
+            const resultsContainer = document.getElementById('search-results');
+            if (resultsContainer) resultsContainer.style.display = 'none';
+        }
+        
+        function exportSearchResults() {
+            window.open('/api/alerts/export?format=csv&limit=1000', '_blank');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        window.addEventListener('error', function(event) {
+            console.error('JavaScript error:', event.error);
+        });
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('Tab hidden, pausing auto-refresh');
+                if (autoRefresh && refreshInterval) {
+                    clearInterval(refreshInterval);
+                }
+            } else {
+                console.log('Tab visible, resuming auto-refresh');
+                if (autoRefresh) {
+                    startAutoRefresh();
+                    refreshData(); 
+                }
+            }
+        });
+    </script>
+</body>
+</html>
