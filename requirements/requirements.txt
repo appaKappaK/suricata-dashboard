@@ -1,0 +1,79 @@
+# ==================== SURICATA DASHBOARD REQUIREMENTS ====================
+# Core application dependencies for the Suricata IDS Dashboard v2.1
+
+# ==================== CORE APPLICATION ====================
+Flask==3.1.2              # Web framework for the dashboard
+Flask-Limiter==3.13       # Rate limiting for API endpoints
+python-dotenv==1.1.1      # Environment variable management
+psutil==7.1.0             # System performance monitoring
+geoip2==5.1.0             # IP geolocation services
+
+# ==================== FLASK DEPENDENCIES ====================
+blinker==1.9.0            # Flask signal support
+click==8.3.0              # Command line interface framework
+itsdangerous==2.2.0       # Security for Flask sessions
+Jinja2==3.1.6             # Template engine
+MarkupSafe==3.0.3         # HTML/XML markup safety
+Werkzeug==3.1.3           # WSGI web application library
+
+# ==================== RATE LIMITING ====================
+limits==5.6.0             # Backend for Flask-Limiter
+ordered-set==4.1.0        # Ordered set data structure
+typing_extensions==4.15.0 # Type hints support
+rich==14.1.0              # Beautiful terminal output
+
+# ==================== GEOIP & NETWORKING ====================
+aiohttp==3.12.15          # Async HTTP client for GeoIP
+maxminddb==2.8.2          # MaxMind database reader
+requests==2.32.5          # HTTP library for GeoIP fallback
+
+# ==================== ASYNC & NETWORK UTILITIES ====================
+aiohappyeyeballs==2.6.1   # Happy Eyeballs algorithm implementation
+aiosignal==1.4.0          # Signal management for aiohttp
+attrs==25.3.0             # Classes without boilerplate
+frozenlist==1.7.0         # Immutable list implementation
+multidict==6.6.4          # Multidict implementation
+propcache==0.3.2          # Property caching
+yarl==1.20.1              # URL library
+
+# ==================== HTTP & SECURITY ====================
+certifi==2025.8.3         # SSL certificates
+charset-normalizer==3.4.3 # Character encoding detection
+idna==3.10                # Internationalized Domain Names
+urllib3==2.5.0            # HTTP client library
+
+# ==================== UTILITIES ====================
+Deprecated==1.2.18        # Deprecation warnings
+packaging==25.0           # Core utilities for Python packages
+markdown-it-py==4.0.0     # Markdown parser
+Pygments==2.19.2          # Syntax highlighting
+mdurl==0.1.2              # URL utilities for markdown
+wrapt==1.17.3             # Decorators and monkey patching
+
+# ==================== PRODUCTION DEPLOYMENT ====================
+# For production use, install gunicorn:
+# source venv/bin/activate
+# pip install gunicorn==21.2.0
+
+# ==================== PRODUCTION DEPLOYMENT COMMANDS ====================
+# Gunicorn (recommended for production):
+# gunicorn -w 4 -b 0.0.0.0:8080 --access-logfile - app:app
+
+# Systemd service example (/etc/systemd/system/suricata-dashboard.service):
+# [Unit]
+# Description=Suricata IDS Dashboard
+# After=network.target
+#
+# [Service]
+# User=matth
+# WorkingDirectory=/path/to/suricata_dashboard
+# Environment=PATH=/path/to/venv/bin
+# ExecStart=/path/to/venv/bin/gunicorn -w 4 -b 0.0.0.0:8080 app:app
+# Restart=always
+#
+# [Install]
+# WantedBy=multi-user.target
+
+# ==================== DEVELOPMENT ====================
+# For development, run with: python app.py
+# Access at: http://localhost:8080 or http://10.8.0.2:8080

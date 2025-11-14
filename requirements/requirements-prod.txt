@@ -1,0 +1,12 @@
+# requirements-prod.txt
+# Production deployment dependencies
+
+-r requirements.txt
+
+# ==================== PRODUCTION SERVER ====================
+gunicorn==21.2.0
+greenlet==3.1.1
+
+# ==================== MONITORING ====================
+prometheus-client==0.21.0
+sentry-sdk==2.10.0
